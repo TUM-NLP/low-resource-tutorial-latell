@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Resource, High-Impact: Building Corpora for Inclusive Language Technologies @ LaTeLL 2026</title>
+  <meta name="description" content="Tutorial at LaTeLL 2026 (Fes, Morocco) on building fair, end-to-end NLP pipelines for low-resource and multilingual languages." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Low-Resource, High-Impact @ LaTeLL 2026" />
+  <meta property="og:description" content="A hands-on tutorial on building fair, end-to-end NLP pipelines for low-resource and multilingual languages — LaTeLL 2026, Fes, Morocco." />
+  <meta property="og:image" content="https://tum-nlp.github.io/low-resource-tutorial/tutorial_logo.png" />
+  <meta property="og:type" content="website" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* Light, warm, academic palette */
+      --bg:          #fbfaf6;
+      --bg-soft:     #f4efe6;
+      --surface:     #ffffff;
+      --surface-alt: #f8f5ee;
+
+      --ink:         #2a2623;
+      --ink-muted:   #6b625a;
+      --ink-soft:    #8c8379;
+
+      --accent:      #c46a3f;   /* warm terracotta — a gentle Fes-inspired note */
+      --accent-hover:#a9542d;
+      --accent-soft: #f1d9c8;
+      --sage:        #7a9481;   /* secondary accent */
+      --gold:        #c49a5c;
+
+      --border:      #e7dfd1;
+      --border-soft: #efe9dd;
+
+      --shadow-sm: 0 1px 2px rgba(84, 60, 40, 0.04);
+      --shadow-md: 0 4px 20px rgba(84, 60, 40, 0.06);
+      --shadow-lg: 0 12px 40px rgba(84, 60, 40, 0.08);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-full: 999px;
+
+      --max-w: 1080px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--ink);
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(196, 106, 63, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 10%, rgba(122, 148, 129, 0.05) 0%, transparent 50%);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ------- Typography ------- */
+    h1, h2, h3, h4 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin: 0;
+    }
+    h1 { font-size: clamp(2rem, 4.6vw, 3.4rem); font-weight: 600; letter-spacing: -0.02em; }
+    h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+    h3 { font-size: 1.25rem; font-weight: 600; }
+    h4 { font-size: 1.05rem; font-weight: 600; }
+
+    p { margin: 0 0 1rem; color: var(--ink); }
+    a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .18s, color .18s; }
+    a:hover { color: var(--accent-hover); border-bottom-color: var(--accent-hover); }
+
+    em, i { font-family: 'Fraunces', Georgia, serif; font-style: italic; }
+
+    /* ------- Layout ------- */
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    section { padding: 4rem 0; }
+
+    /* ------- Top nav strip ------- */
+    .topbar {
+      border-bottom: 1px solid var(--border-soft);
+      background: rgba(251, 250, 246, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .topbar-brand {
+      font-family: 'Fraunces', serif;
+      font-weight: 500;
+      font-size: 1rem;
+      color: var(--ink);
+      border-bottom: none;
+    }
+    .topbar-brand .dot { color: var(--accent); }
+    .topbar-nav {
+      display: flex;
+      gap: 1.4rem;
+      font-size: 0.92rem;
+    }
+    .topbar-nav a {
+      color: var(--ink-muted);
+      border-bottom: none;
+    }
+    .topbar-nav a:hover { color: var(--accent); }
+    @media (max-width: 640px) { .topbar-nav { display: none; } }
+
+    /* ------- Hero ------- */
+    .hero {
+      padding: 4.5rem 0 3.5rem;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent-soft);
+      color: var(--accent-hover);
+      padding: 0.35rem 0.9rem;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero-badge::before {
+      content: "";
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      margin-bottom: 0.8rem;
+    }
+    .hero h1 em {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .hero-venue {
+      font-size: 1.05rem;
+      color: var(--ink-muted);
+      margin-bottom: 2rem;
+    }
+    .hero-venue strong { color: var(--ink); font-weight: 600; }
+
+    .hero-logo {
+      width: clamp(120px, 16vw, 170px);
+      height: auto;
+      margin-bottom: 2rem;
+      float: right;
+      margin-left: 2rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 720px) {
+      .hero-logo { float: none; display: block; margin: 0 auto 1.5rem; }
+    }
+
+    /* Authors */
+    .authors {
+      margin: 1.8rem 0 1.5rem;
+      font-size: 1rem;
+      line-height: 1.9;
+    }
+    .authors a {
+      color: var(--ink);
+      border-bottom: 1px dotted var(--ink-soft);
+      font-weight: 500;
+    }
+    .authors a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .authors sup { color: var(--accent); font-weight: 600; font-size: 0.8em; }
+
+    .affiliations {
+      font-size: 0.9rem;
+      color: var(--ink-muted);
+      margin-bottom: 2rem;
+    }
+    .affiliations sup { color: var(--accent); font-weight: 600; }
+
+    /* Meta block (date, venue) */
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 1.6rem;
+      padding: 1.2rem 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.95rem;
+      color: var(--ink-muted);
+    }
+    .meta-item strong { color: var(--ink); font-weight: 600; }
+    .meta-icon {
+      width: 18px; height: 18px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 1.3rem;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      transition: all .2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #fff;
+    }
+    .btn svg { width: 17px; height: 17px; }
+
+    /* TL;DR card */
+    .tldr {
+      background: var(--surface-alt);
+      border-left: 3px solid var(--accent);
+      padding: 1.3rem 1.6rem;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin-top: 1rem;
+    }
+    .tldr-label {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-right: 0.4rem;
+    }
+
+    /* ------- Section heading ------- */
+    .section-eyebrow {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      margin-bottom: 2rem;
+    }
+    .section-divider {
+      width: 40px; height: 2px;
+      background: var(--accent);
+      border: none;
+      margin: 0 0 2rem;
+    }
+
+    /* ------- Abstract ------- */
+    .abstract-text {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--ink);
+    }
+
+    /* ------- Schedule ------- */
+    .schedule {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .schedule-item {
+      padding: 1.3rem 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .schedule-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .schedule-item:first-child { padding-top: 0; }
+    .schedule-part {
+      display: inline-block;
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      color: var(--accent);
+      font-size: 0.88rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+    .schedule-item h3 { margin-bottom: 0.5rem; }
+    .schedule-item p { color: var(--ink-muted); margin-bottom: 0; font-size: 0.98rem; }
+
+    .schedule-subitem {
+      margin-top: 1.1rem;
+      padding-left: 1.2rem;
+      border-left: 2px solid var(--accent-soft);
+    }
+    .schedule-subitem h4 { margin-bottom: 0.3rem; font-size: 1rem; color: var(--ink); }
+    .schedule-subitem p { font-size: 0.95rem; }
+
+    /* ------- Reading list ------- */
+    .reading-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .reading-card {
+      display: block;
+      padding: 1.4rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      transition: all .2s ease;
+      color: var(--ink);
+      border-bottom: 1px solid var(--border);
+    }
+    .reading-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md);
+      color: var(--ink);
+    }
+    .reading-venue {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-full);
+      margin-bottom: 0.75rem;
+    }
+    .reading-card h4 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.05rem;
+      font-weight: 500;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+
+    /* ------- Presenters ------- */
+    .presenters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2rem;
+    }
+    .presenter {
+      text-align: center;
+    }
+    .presenter-photo {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 1rem;
+      border: 3px solid var(--surface);
+      box-shadow: var(--shadow-md);
+      background: var(--surface-alt);
+    }
+    .presenter h3 {
+      font-size: 1.05rem;
+      margin-bottom: 0.3rem;
+    }
+    .presenter p {
+      font-size: 0.88rem;
+      color: var(--ink-muted);
+      margin-bottom: 0;
+      line-height: 1.45;
+    }
+
+    /* ------- BibTeX ------- */
+    .bibtex-block {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem 1.7rem;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 0.87rem;
+      line-height: 1.7;
+      color: var(--ink);
+      overflow-x: auto;
+      position: relative;
+    }
+    .bibtex-block pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+    .copy-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.4rem 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      transition: all .18s;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* ------- Material ------- */
+    .material-note {
+      background: var(--surface-alt);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--ink-muted);
+      font-style: italic;
+      font-family: 'Fraunces', serif;
+      font-size: 1.02rem;
+    }
+
+    /* ------- Footer ------- */
+    footer {
+      margin-top: 2rem;
+      padding: 2.5rem 0 3rem;
+      border-top: 1px solid var(--border);
+      color: var(--ink-muted);
+      font-size: 0.88rem;
+      text-align: center;
+      line-height: 1.7;
+    }
+    footer a { color: var(--ink-muted); border-bottom: 1px dotted var(--ink-soft); }
+    footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Decorative ornamental divider (subtle Moroccan-inspired) */
+    .ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.7rem;
+      margin: 2rem auto;
+      color: var(--accent);
+      opacity: 0.55;
+    }
+    .ornament::before, .ornament::after {
+      content: "";
+      flex: 1;
+      max-width: 60px;
+      height: 1px;
+      background: currentColor;
+    }
+    .ornament-mark {
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+    }
+
+    /* Animation on load */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal { animation: fadeUp 0.7s ease-out both; }
+    .reveal-1 { animation-delay: 0.05s; }
+    .reveal-2 { animation-delay: 0.15s; }
+    .reveal-3 { animation-delay: 0.25s; }
+    .reveal-4 { animation-delay: 0.35s; }
+
+    @media (max-width: 600px) {
+      section { padding: 3rem 0; }
+      .schedule { padding: 1.4rem; }
+      .hero { padding: 3rem 0 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top sticky nav -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a class="topbar-brand" href="#top">Low-Resource<span class="dot">.</span> High-Impact</a>
+      <nav class="topbar-nav">
+        <a href="#abstract">Abstract</a>
+        <a href="#schedule">Schedule</a>
+        <a href="#reading">Reading</a>
+        <a href="#presenters">Presenters</a>
+        <a href="#cite">Cite</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero container" id="top">
+    <img class="hero-logo reveal reveal-1"
+         src="https://tum-nlp.github.io/low-resource-tutorial/tutorial_logo.png"
+         alt="Tutorial logo" />
+
+    <div class="hero-badge reveal reveal-1">LaTeLL 2026 · Tutorial</div>
+
+    <h1 class="reveal reveal-2">
+      Low-Resource, <em>High-Impact:</em><br />
+      Building Corpora for Inclusive Language Technologies
+    </h1>
+
+    <p class="hero-venue reveal reveal-2">
+      Tutorial at the <strong>International Conference on Language Technologies for Low-resource Languages (LaTeLL 2026)</strong> — a forum dedicated to NLP for the 85% of the world's languages often left behind.
+    </p>
+
+    <div class="authors reveal reveal-3">
+      <a href="https://scholar.google.com/citations?user=G0lCb3wAAAAJ&hl=en">Ekaterina (Katya) Artemova</a><sup>1</sup> ·
+      <a href="https://commoncrawl.org/team/laurie-burchell">Laurie Burchell</a><sup>2</sup> ·
+      <a href="https://dardem.github.io">Daryna Dementieva</a><sup>3</sup> ·
+      <a href="https://aclanthology.org/people/shu-okabe/">Shu Okabe</a><sup>3</sup> ·
+      <a href="https://scholar.google.com/citations?user=yQ5_EHYAAAAJ&hl=en">Mariya Shmatova</a><sup>1</sup> ·
+      <a href="https://portizs.eu">Pedro Ortiz Suarez</a><sup>2</sup>
+    </div>
+
+    <div class="affiliations reveal reveal-3">
+      <sup>1</sup>Toloka &nbsp;·&nbsp;
+      <sup>2</sup>Common Crawl Foundation &nbsp;·&nbsp;
+      <sup>3</sup>TUM
+    </div>
+
+    <div class="meta reveal reveal-3">
+      <div class="meta-item">
+        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span><strong>30 September – 2 October 2026</strong></span>
+      </div>
+      <div class="meta-item">
+        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span><strong>Fes, Morocco</strong></span>
+      </div>
+      <div class="meta-item">
+        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        <span>Hands-on tutorial · <strong>10+ languages</strong></span>
+      </div>
+    </div>
+
+    <div class="buttons reveal reveal-4">
+      <a class="btn btn-primary" href="https://arxiv.org/pdf/2512.14576" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        Tutorial Proposal
+      </a>
+      <a class="btn" href="https://latell.org/2026/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        LaTeLL 2026
+      </a>
+      <a class="btn" href="#cite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3-2 6-2 9 0 3-2 6-2 9 0V5c-3-2-6-2-9 0-3-2-6-2-9 0z"></path></svg>
+        Cite
+      </a>
+    </div>
+
+    <div class="tldr reveal reveal-4">
+      <span class="tldr-label">TL;DR —</span>
+      A hands-on tutorial on building fair, end-to-end NLP pipelines for low-resource and multilingual languages — covering data collection to MT and downstream tasks — using real-world, community-informed methods and case studies across 10+ diverse languages.
+    </div>
+  </header>
+
+  <div class="ornament container"><span class="ornament-mark">◆ ◆ ◆</span></div>
+
+  <!-- Abstract -->
+  <section id="abstract">
+    <div class="container">
+      <div class="section-eyebrow">Overview</div>
+      <h2 class="section-title">Abstract</h2>
+      <hr class="section-divider" />
+      <p class="abstract-text">
+        This tutorial is designed for NLP practitioners, researchers, and developers working with multilingual and low-resource languages who seek to create more equitable and socially impactful language technologies. Participants will walk away with a practical toolkit for building end-to-end NLP pipelines for underrepresented languages — from data collection and web crawling to parallel sentence mining, machine translation, and downstream applications such as text classification and multimodal reasoning.
+      </p>
+      <p class="abstract-text">
+        The tutorial presents strategies for tackling the challenges of data scarcity and cultural variance, offering hands-on methods and modeling frameworks. We focus on fair, reproducible, and community-informed development approaches, grounded in real-world scenarios. We showcase a diverse set of use cases covering over 10 languages from different language families and geopolitical contexts, including both digitally resource-rich and severely underrepresented languages.
+      </p>
+    </div>
+  </section>
+
+  <!-- Schedule -->
+  <section id="schedule">
+    <div class="container">
+      <div class="section-eyebrow">Outline</div>
+      <h2 class="section-title">Schedule</h2>
+      <hr class="section-divider" />
+
+      <div class="schedule">
+
+        <div class="schedule-item">
+          <span class="schedule-part">Part 1</span>
+          <h3>Data Annotation Basics</h3>
+          <p>We introduce key principles, workflows, and best practices in data annotation for NLP, with a focus on quality, scalability, and ethical considerations.</p>
+        </div>
+
+        <div class="schedule-item">
+          <span class="schedule-part">Part 2</span>
+          <h3>Case Studies</h3>
+          <p>Three real-world pipelines showing how to build language technology when the data simply isn't there yet.</p>
+
+          <div class="schedule-subitem">
+            <h4>2.1 — Pre-training Data Crawling and Filtering</h4>
+            <p>Our experience creating a corpus to evaluate language identification systems on web data.</p>
+          </div>
+
+          <div class="schedule-subitem">
+            <h4>2.2 — Obtaining a Machine Translation System</h4>
+            <p>Parallel sentence mining for low-resource languages, plus collecting low-resource MT data.</p>
+          </div>
+
+          <div class="schedule-subitem">
+            <h4>2.3 — Downstream Task System Acquisition</h4>
+            <p>Cross-lingual text classification knowledge transfer for low-resource languages, and data labeling for image captioning and visual question answering in low-resource dialects.</p>
+          </div>
+        </div>
+
+        <div class="schedule-item">
+          <span class="schedule-part">Part 3</span>
+          <h3>Expert Interviews on Benchmark Creation in Low-Resource Settings</h3>
+          <p>An overview of insights gained from interviews with NLP experts actively involved in the creation of benchmarks for positive social impact applications.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Reading list -->
+  <section id="reading">
+    <div class="container">
+      <div class="section-eyebrow">Further Reading</div>
+      <h2 class="section-title">Reading List</h2>
+      <hr class="section-divider" />
+
+      <div class="reading-grid">
+        <a class="reading-card" href="https://aclanthology.org/2025.coling-main.97.pdf" target="_blank" rel="noopener">
+          <span class="reading-venue">COLING 2025</span>
+          <h4>Cross-lingual Text Classification Transfer: The Case of Ukrainian</h4>
+        </a>
+        <a class="reading-card" href="https://arxiv.org/abs/2503.21910" target="_blank" rel="noopener">
+          <span class="reading-venue">EACL 2026</span>
+          <h4>JEEM: Vision-Language Understanding in Four Arabic Dialects</h4>
+        </a>
+        <a class="reading-card" href="https://aclanthology.org/2025.acl-short.17/" target="_blank" rel="noopener">
+          <span class="reading-venue">ACL 2025</span>
+          <h4>Improving Parallel Sentence Mining for Low-Resource and Endangered Languages</h4>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Presenters -->
+  <section id="presenters">
+    <div class="container">
+      <div class="section-eyebrow">The Team</div>
+      <h2 class="section-title">Presenters</h2>
+      <hr class="section-divider" />
+
+      <div class="presenters-grid">
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/katya_photo.jpeg" alt="Ekaterina Artemova" />
+          <h3>Ekaterina Artemova</h3>
+          <p>Toloka AI, German UDS</p>
+        </div>
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/laurie_photo.webp" alt="Laurie Burchell" />
+          <h3>Laurie Burchell</h3>
+          <p>Senior Research Engineer<br />Common Crawl Foundation</p>
+        </div>
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/daryna_photo.jpeg" alt="Daryna Dementieva" />
+          <h3>Daryna Dementieva</h3>
+          <p>Postdoc @ TUM</p>
+        </div>
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/profile.png" alt="Shu Okabe" />
+          <h3>Shu Okabe</h3>
+          <p>Postdoc @ TUM</p>
+        </div>
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/maria_photo.png" alt="Mariya Shmatova" />
+          <h3>Mariya Shmatova</h3>
+          <p>Toloka AI</p>
+        </div>
+        <div class="presenter">
+          <img class="presenter-photo" src="https://tum-nlp.github.io/low-resource-tutorial/pedro_photo.webp" alt="Pedro Ortiz Suarez" />
+          <h3>Pedro Ortiz Suarez</h3>
+          <p>Principal Research Scientist<br />Common Crawl Foundation</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tutorial material -->
+  <section id="material">
+    <div class="container">
+      <div class="section-eyebrow">Resources</div>
+      <h2 class="section-title">Tutorial Material</h2>
+      <hr class="section-divider" />
+      <div class="material-note">
+        Slides and hands-on materials will be released here closer to the conference.
+      </div>
+    </div>
+  </section>
+
+  <!-- BibTeX -->
+  <section id="cite">
+    <div class="container">
+      <div class="section-eyebrow">Citation</div>
+      <h2 class="section-title">BibTeX</h2>
+      <hr class="section-divider" />
+      <div class="bibtex-block">
+        <button class="copy-btn" onclick="copyBib(this)">Copy</button>
+<pre id="bibtex">@inproceedings{lowresourcetutoriallatell2026,
+  title     = {Low-Resource, High-Impact: Building Corpora for Inclusive Language Technologies},
+  author    = {Artemova, Ekaterina and Burchell, Laurie and Dementieva, Daryna and Okabe, Shu and Shmatova, Mariya and Ortiz Suarez, Pedro},
+  booktitle = {Proceedings of LaTeLL 2026 — International Conference on Language Technologies for Low-resource Languages},
+  year      = {2026},
+  address   = {Fes, Morocco},
+  url       = {https://arxiv.org/abs/2512.14576}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="ornament" style="margin-bottom:1.2rem"><span class="ornament-mark">◆</span></div>
+      <p>
+        Page adapted from the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank" rel="noopener">Academic Project Page Template</a>, originally from the <a href="https://nerfies.github.io" target="_blank" rel="noopener">Nerfies</a> project.<br />
+        Licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function copyBib(btn) {
+      const text = document.getElementById('bibtex').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.color = 'var(--accent)';
+        btn.style.borderColor = 'var(--accent)';
+        setTimeout(() => {
+          btn.innerText = original;
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }, 1800);
+      });
+    }
+  </script>
+</body>
+</html>
